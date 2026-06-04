@@ -1,0 +1,90 @@
+import pandas as pd
+import joblib
+import os
+
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split
+
+# Create models folder
+os.makedirs("models", exist_ok=True)
+
+# Load dataset
+df = pd.read_csv("data/startup_funding.csv")
+
+# Convert funding amount to numeric
+df["AmountInUSD"] = (
+    df["AmountInUSD"]
+    .astype(str)
+    .str.replace(",", "", regex=False)
+)
+
+df["AmountInUSD"] = pd.to_numeric(
+    df["AmountInUSD"],
+    errors="coerce"
+)
+
+# Remove rows with missing target values
+df = df.dropna(subset=["AmountInUSD"])
+
+# Fill missing categorical values
+df["IndustryVertical"] = df["IndustryVertical"].fillna("Unknown")
+df["CityLocation"] = df["CityLocation"].fillna("Unknown")
+df["InvestmentType"] = df["InvestmentType"].fillna("Unknown")
+
+# Encode categorical features
+df["Industry"] = (
+    df["IndustryVertical"]
+    .astype("category")
+    .cat.codes
+)
+
+df["City"] = (
+    df["CityLocation"]
+    .astype("category")
+    .cat.codes
+)
+
+df["Investment"] = (
+    df["InvestmentType"]
+    .astype("category")
+    .cat.codes
+)
+
+# Features
+X = df[
+    [
+        "Industry",
+        "City",
+        "Investment"
+    ]
+]
+
+# Target
+y = df["AmountInUSD"]
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.20,
+    random_state=42
+)
+
+# Train model
+model = RandomForestRegressor(
+    n_estimators=200,
+    max_depth=12,
+    random_state=42,
+    n_jobs=-1
+)
+
+model.fit(X_train, y_train)
+
+# Save model
+joblib.dump(
+    model,
+    "models/funding_model.pkl"
+)
+
+print("✅ Model saved successfully!")
+print("📁 models/funding_model.pkl")
