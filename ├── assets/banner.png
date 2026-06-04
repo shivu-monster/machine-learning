@@ -1,0 +1,86 @@
+from PIL import Image, ImageDraw, ImageFont
+import os
+
+# Create assets folder
+os.makedirs("assets", exist_ok=True)
+
+# Banner size
+WIDTH = 1200
+HEIGHT = 300
+
+# Colors
+BACKGROUND_COLOR = (25, 118, 210)  # Blue
+TEXT_COLOR = (255, 255, 255)       # White
+
+# Create image
+image = Image.new(
+    "RGB",
+    (WIDTH, HEIGHT),
+    BACKGROUND_COLOR
+)
+
+draw = ImageDraw.Draw(image)
+
+# Text
+title = "🚀 Top Funding Startups in India"
+subtitle = "Interactive Startup Funding Analysis Dashboard"
+
+# Load fonts
+try:
+    title_font = ImageFont.truetype("arial.ttf", 60)
+    subtitle_font = ImageFont.truetype("arial.ttf", 30)
+except:
+    title_font = ImageFont.load_default()
+    subtitle_font = ImageFont.load_default()
+
+# Center title
+title_bbox = draw.textbbox(
+    (0, 0),
+    title,
+    font=title_font
+)
+
+title_width = title_bbox[2] - title_bbox[0]
+
+# Center subtitle
+subtitle_bbox = draw.textbbox(
+    (0, 0),
+    subtitle,
+    font=subtitle_font
+)
+
+subtitle_width = subtitle_bbox[2] - subtitle_bbox[0]
+
+# Draw title
+draw.text(
+    (
+        (WIDTH - title_width) // 2,
+        70
+    ),
+    title,
+    fill=TEXT_COLOR,
+    font=title_font
+)
+
+# Draw divider line
+draw.line(
+    [(150, 145), (1050, 145)],
+    fill=TEXT_COLOR,
+    width=2
+)
+
+# Draw subtitle
+draw.text(
+    (
+        (WIDTH - subtitle_width) // 2,
+        170
+    ),
+    subtitle,
+    fill=TEXT_COLOR,
+    font=subtitle_font
+)
+
+# Save banner
+image.save("assets/banner.png")
+
+print("✅ assets/banner.png created successfully!")
