@@ -1,0 +1,93 @@
+import pandas as pd
+import joblib
+import os
+
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split
+
+# Create models folder
+os.makedirs("models", exist_ok=True)
+
+# Load dataset
+df = pd.read_csv("data/startup_funding.csv")
+
+# Clean funding column
+df["AmountInUSD"] = (
+    df["AmountInUSD"]
+    .astype(str)
+    .str.replace(",", "", regex=False)
+)
+
+df["AmountInUSD"] = pd.to_numeric(
+    df["AmountInUSD"],
+    errors="coerce"
+)
+
+# Remove invalid rows
+df = df.dropna(subset=["AmountInUSD"])
+
+# Fill missing values
+df["IndustryVertical"] = df["IndustryVertical"].fillna("Unknown")
+df["CityLocation"] = df["CityLocation"].fillna("Unknown")
+df["InvestmentType"] = df["InvestmentType"].fillna("Unknown")
+
+# Encode categorical columns
+industry_map = {
+    value: idx
+    for idx, value in enumerate(
+        df["IndustryVertical"].unique()
+    )
+}
+
+city_map = {
+    value: idx
+    for idx, value in enumerate(
+        df["CityLocation"].unique()
+    )
+}
+
+investment_map = {
+    value: idx
+    for idx, value in enumerate(
+        df["InvestmentType"].unique()
+    )
+}
+
+df["Industry"] = df["IndustryVertical"].map(industry_map)
+df["City"] = df["CityLocation"].map(city_map)
+df["Investment"] = df["InvestmentType"].map(investment_map)
+
+# Features
+X = df[["Industry", "City", "Investment"]]
+
+# Target
+y = df["AmountInUSD"]
+
+# Split data
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42
+)
+
+# Train model
+model = RandomForestRegressor(
+    n_estimators=200,
+    random_state=42
+)
+
+model.fit(X_train, y_train)
+
+# Save model and encoders
+joblib.dump(
+    {
+        "model": model,
+        "industry_map": industry_map,
+        "city_map": city_map,
+        "investment_map": investment_map
+    },
+    "models/funding_model.pkl"
+)
+
+print("✅ funding_model.pkl created successfully")
